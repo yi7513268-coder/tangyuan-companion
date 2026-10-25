@@ -2,6 +2,10 @@
 
 汤圆结合机器人自身的摄像头与动作能力、电脑工具协作和 HRI（人机交互）研究。本仓库提供 **可由官方 SDK Runtime 启动的视觉基础应用**，并附 **MimiClaw 与 HRI 的独立实验扩展源码**。作者署名：Tangyuan Lab。版本：0.1.0。
 
+## 真机演示视频
+
+[观看／下载真机演示](https://github.com/yi7513268-coder/tangyuan-companion/releases/tag/demo-2026-10-25)（约2分59.56秒，原始MP4约20.5MB）。进入页面后，点击 Assets 中的 `tangyuan-real-robot-demo.mp4`。这是用户实机录制；视频不代表所有扩展或新设备安装已完成验收。
+
 ## 功能与运行位置
 
 | 部分 | 提供内容 | 运行条件与验证范围 |
