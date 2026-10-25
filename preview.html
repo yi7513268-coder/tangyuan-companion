@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>机器人视觉测试</title>
+<style>
+body{font:16px/1.6 system-ui,"Microsoft YaHei",sans-serif;margin:24px auto;padding:0 20px;max-width:1060px;background:#f4f6f5;color:#20342d}
+h1{font-size:26px;margin:0}p{margin:6px 0 18px}main{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+img{max-width:100%;width:640px;background:#20342d;border-radius:6px}aside{flex:1;min-width:260px}
+button{font:inherit;border:1px solid #80958a;background:#e5ece8;color:#20342d;padding:7px 12px;margin:0 6px 8px 0;border-radius:5px;cursor:pointer}
+button:focus-visible{outline:3px solid #5a9578}button:first-child{background:#f6dfd8}dl{display:grid;grid-template-columns:100px 1fr;gap:7px;margin:14px 0}dd{margin:0}
+#error{color:#934230;overflow-wrap:anywhere}ul{padding-left:20px}#events{font-size:13px;white-space:pre-wrap;max-height:160px;overflow:auto}
+</style>
+<h1>手势互动与人脸跟随</h1><p>机器人摄像头 · MediaPipe 本地识别 · 绿框为人脸，十字为跟随中心 · SDK公开基础版；实验扩展见README</p><p id="mode" role="status">正在读取你的跟随与手势开关设置。</p>
+<main><div><img src="/stream.mjpg" alt="机器人摄像头实时识别画面"><div id="error" role="status" aria-live="polite"></div></div>
+<aside><button onclick="control('pause')">暂停全部动作</button><button id="start" onclick="control('resume')">开启跟随与手势</button><button onclick="control('follow-off')">只暂停跟随</button><button onclick="control('gestures-on')">开启手势</button><button onclick="control('gestures-off')">关闭手势</button><button onclick="control('recenter')">回到中位</button>
+<p id="gesture-note" role="status"></p><dl id="status"></dl>
+<details><summary>跟随方向调节</summary><p>如果机器人越跟越偏，暂停后反转对应轴。自动校准需明亮、静止的背景，结束后点击恢复跟随。</p><button onclick="control('calibrate')">自动校准方向</button><button onclick="control('flip_pan')">反转水平轴</button><button onclick="control('flip_tilt')">反转俯仰轴</button></details>
+<ul><li>张开手掌：招呼、左右回应</li><li>点赞：点头</li><li>V 手势：开心摆头</li><li>倒赞：摇头</li><li id="fist-label">握拳：临时停止</li><li>食指向上：恢复跟随</li><li>我爱你手势：爱心回应</li></ul>
+<p id="gesture-stop-help">手势保持约 1–2 秒，放下手约 3 秒再重复。正在读取跟随模式。</p>
+<p>开关会保存在本机。连接中断时临时停止动作，重连并取得连续新画面后自动恢复原来开启的跟随与手势；你主动暂停的功能保持暂停。</p>
+<details><summary>使用的模型</summary><p>MediaPipe Gesture Recognizer v1 与 BlazeFace Short Range v1，在电脑本地运行。人脸模型用于检测位置和跟随。</p></details>
+<pre id="events"></pre></aside></main>
+<script>
+const camera=document.querySelector('img');let previousFrames=-1,reconnectPreview=false;
+function connectPreview(){camera.src='/stream.mjpg?retry='+Date.now();}
+camera.addEventListener('error',()=>setTimeout(connectPreview,1500));
+async function control(name){try{const r=await fetch('/api/control/'+name,{method:'POST'});const d=await r.json();if(!r.ok)throw Error(d.detail);document.querySelector('#error').textContent='';}catch(e){document.querySelector('#error').textContent=e.message;}}
+async function update(){try{
+const r=await fetch('/api/status');const s=await r.json();
+if(reconnectPreview||s.frames<previousFrames){connectPreview();reconnectPreview=false;}previousFrames=s.frames;
+const phases={starting:'初始化',paused:'已暂停',running:'运行中',responding:'动作回应',calibrating:'校准中',waiting_camera:'等待相机',waiting_connection:'等待重连',waiting_release:'等待资源释放',restoring_visual:'正在恢复动作',error:'发生错误',stopped:'已停止'};
+const tracking={interaction_search:'躲猫猫主动寻找',interaction_hold:'躲猫猫准备寻找',paused:'暂停',camera_unavailable:'等待新画面',no_face:'未找到人脸',target_lost:'目标丢失',centered:'已居中',tracking:'调整方向',joint_limit:'已到机械边界'};
+const recovering=['waiting_camera','waiting_connection','waiting_release','restoring_visual'].includes(s.phase);
+const recoveryChoice='连接和新画面稳定后，跟随'+(s.follow_requested?'恢复开启':'保持关闭')+'，手势'+(s.gestures_requested?'恢复开启':'保持关闭')+'。';
+const modes={starting:'正在连接机器人并加载模型。',calibrating:'方向校准中，机器人会小幅转动；点击暂停可取消。',responding:'正在回应手势，握拳或点击暂停可中断。',error:'应用发生错误，请查看下方提示并修复后重启。',stopped:'应用已停止。',waiting_camera:'等待相机新画面。'+recoveryChoice,waiting_connection:'正在等待机器人重新连接。'+recoveryChoice,waiting_release:'正在确认本程序资源释放，暂不执行动作。'+recoveryChoice,restoring_visual:'新画面已稳定，正在恢复跟随与手势。'};
+const temporaryHold=s.continuous_follow&&s.gesture_temporary_hold;
+document.querySelector('#mode').textContent=temporaryHold&&!recovering?'握拳临时停止动作；放下手、连续新画面稳定后自动继续跟随。':modes[s.phase]||(s.armed?(s.following?(s.continuous_follow?'持续跟随与手势已启用；握拳临停，放下手自动继续。':'跟随与手势已启用；握拳会暂停动作。'):(s.gestures_enabled?'跟随已暂停，手势仍开启。':'动作已暂停；请明确开启需要的功能。')):'动作尚未开启：点击“开启跟随与手势”后才会做动作。');
+document.querySelector('#gesture-stop-help').textContent='手势保持约 1–2 秒，放下手约 3 秒再重复。'+(s.continuous_follow?'持续跟随模式：握拳只临时停动作，放下手稳定约1.5秒后自动继续。':'握拳暂停后，先用食指向上或按钮恢复。')+'点击暂停全部动作会停止跟随和手势；说“停止跟随”只停止跟随。机器人正在对话时，普通手势互动会等待。';
+document.querySelector('#fist-label').textContent=s.continuous_follow?'握拳：临时停止，放下手继续':'握拳：暂停跟随';
+document.querySelector('#start').textContent=s.armed?'恢复跟随与手势':'开启跟随与手势';
+document.querySelector('#start').disabled=recovering||['starting','error','stopped'].includes(s.phase);
+const pose=s.follow_active&&s.follow_target?s.follow_target.join('° / ')+'°（运动中）':s.pose_confirmed?s.pan_deg+'° / '+s.tilt_deg+'°':'开始时回中确认';
+const ms=value=>value==null?'尚未测量':value+' ms';
+const gestureNames={Open_Palm:'张开手掌',Thumb_Up:'点赞',Thumb_Down:'倒赞',Victory:'V 手势',ILoveYou:'我爱你手势',Closed_Fist:'握拳',Pointing_Up:'食指向上'};const gestureStates={actions_disabled:'动作未开启：先点击上方开启按钮。',paused:'动作已暂停：请先恢复，点赞不会自动解除暂停。',dialogue_busy:'正在对话，暂不执行普通手势动作。',no_gesture:'尚未识别到手势，请让整只手出现在预览中。',low_confidence:'已看到手势，但还不足以确认；调整手掌朝向、距离或光线。',confirming:'正在确认手势，请保持一会儿。',confirmed:'手势已确认，等待动作执行。',release_required:'该手势已确认过；请放下手约三秒后再做。'};document.querySelector('#gesture-note').textContent=gestureStates[s.gesture_status]||(!s.armed?'动作未开启：先点击上方开启按钮。':!s.following?'动作已暂停，请先恢复。':'识别中');const rows=[['状态',phases[s.phase]||s.phase],['人脸',s.faces],['跟随',tracking[s.tracking_status]||s.tracking_status],['手势',gestureNames[s.gesture]||s.gesture||'未检测'],['置信度',s.score],['识别帧率',s.average_fps??s.fps],['取图耗时',ms(s.camera_request_ms)],['模型耗时',ms(s.inference_ms)],['舵机应答',ms(s.follow_command_ms)],['控制帧龄',ms(s.control_frame_age_ms)],['舵机目标',pose],['最近动作',gestureNames[s.last_action]||s.last_action||'尚无'],['手势触发',s.gesture_events],['跟随调整',s.servo_commands],['轴方向',s.axis_signs.pan+' / '+s.axis_signs.tilt]];
+if(recovering)document.querySelector('#gesture-note').textContent='相机恢复期间暂不执行手势。'+recoveryChoice;
+else if(temporaryHold)document.querySelector('#gesture-note').textContent='正在等待放下握拳的手，手势不会被保存成长期暂停。';
+rows.splice(1,0,['保存的开关',s.follow_requested?'跟随与手势开启':'跟随与手势暂停'],['重连尝试',s.recovery_attempts??0]);
+const list=document.querySelector('#status');list.replaceChildren();
+for(const [label,value]of rows){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=String(value);list.append(dt,dd);}
+document.querySelector('#error').textContent=s.error||s.preference_error||(s.brightness<25?'画面较暗，请补充光线':s.frame_age_seconds>3?'画面尚未更新，等待相机':'');
+document.querySelector('#events').textContent=s.events.map(e=>e.time+' '+e.message).join('\n');
+}catch(e){reconnectPreview=true;document.querySelector('#error').textContent='应用连接中断，请检查终端';}finally{setTimeout(update,700);}}
+update();
+</script></html>

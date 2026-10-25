@@ -1,0 +1,23 @@
+{
+  "port": 18810,
+  "pan_sign": -1,
+  "tilt_sign": -1,
+  "pan_limits": [
+    30,
+    150
+  ],
+  "tilt_limits": [
+    100,
+    130
+  ],
+  "poll_interval": 0.05,
+  "gesture_hold_seconds": 0.65,
+  "gesture_cooldown_seconds": 2.5,
+  "camera_mode": "inference",
+  "vision_model_id": 4,
+  "start_paused": true,
+  "continuous_follow": false,
+  "follow_pan_speed": 36,
+  "follow_tilt_speed": 16,
+  "follow_smoothing": 0.75
+}

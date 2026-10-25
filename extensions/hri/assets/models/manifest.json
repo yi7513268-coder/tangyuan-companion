@@ -1,0 +1,21 @@
+{
+  "repo": "maai-kyoto/vap_ch",
+  "revision": "2988838499e98c9ca507eda072dce8c59867f5c9",
+  "language": "Chinese",
+  "variant": "vap_mono",
+  "license": "CC-BY-NC-ND-4.0; research evaluation, unmodified weights",
+  "sources": {
+    "vap_mono_state_dict_ch_10hz_20000msec.pt": "https://huggingface.co/maai-kyoto/vap_ch/resolve/2988838499e98c9ca507eda072dce8c59867f5c9/vap_mono_state_dict_ch_10hz_20000msec.pt",
+    "60k_epoch4-d0f474de.pt": "https://dl.fbaipublicfiles.com/librilight/CPC_checkpoints/60k_epoch4-d0f474de.pt"
+  },
+  "files": {
+    "vap_mono_state_dict_ch_10hz_20000msec.pt": {
+      "size": 13162469,
+      "sha256": "9fd78a1ce64b2836b07f30ffaa1c7d0c0ed329534db32a7b663eb2a4c08299a4"
+    },
+    "60k_epoch4-d0f474de.pt": {
+      "size": 7379446,
+      "sha256": "d0f474de968c7243c20f43dee1626681618f2f150d3e638e82b79e22563b17f1"
+    }
+  }
+}

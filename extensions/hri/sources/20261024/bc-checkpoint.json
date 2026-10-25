@@ -1,0 +1,10 @@
+{
+  "repo": "maai-kyoto/vap_bc_ch",
+  "revision": "003e16c3ac9ced903d3b1d082f54f882ee015616",
+  "file": "vap-bc_state_dict_ch_10hz_20000msec.pt",
+  "sha256": "6cd5d11131a4dc9469e38ac133215b29b9b8784ed2ea24c0807e7845981ec9a6",
+  "bytes": 23193856,
+  "license": "mit",
+  "source": "https://huggingface.co/maai-kyoto/vap_bc_ch",
+  "scope": "author released Chinese backchannel checkpoint; not original NAACL Japanese dataset experiment; robot output adapted to neutral nod; inference on PC"
+}

@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.16)
+set(PROJECT_VER "0.1.0-mimiclaw-tools-lab")
+set(HW_BODY ON)
+set(HW_HEAD ON)
+if(NOT DEFINED WATCHE_PUBLIC_ROOT)
+ message(FATAL_ERROR "Set -DWATCHE_PUBLIC_ROOT to a compatible public firmware checkout; see README")
+endif()
+include("${WATCHE_PUBLIC_ROOT}/firmware/sdk/examples/sdk.cmake")
+project(tangyuan_mimiclaw)
+watche_hw_check_idf()
+# Trial-only SPI lock fix. Keep the shared ESP-IDF checkout untouched.
+idf_component_get_property(hw_support esp_hw_support COMPONENT_LIB)
+get_target_property(hw_sources ${hw_support} SOURCES)
+# SOURCES paths use forward slashes, while Windows IDF_PATH may use backslashes.
+list(FILTER hw_sources EXCLUDE REGEX "(^|/)spi_bus_lock[.]c$")
+set_property(TARGET ${hw_support} PROPERTY SOURCES "${hw_sources}")
+target_sources(${hw_support} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/main/spi_bus_lock_local.c")

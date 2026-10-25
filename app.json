@@ -1,0 +1,20 @@
+{
+  "schema_version": 2,
+  "id": "local.tangyuan_companion",
+  "name": "汤圆 · 桌面陪伴与交互实验",
+  "version": "0.1.0",
+  "requires_watcherobot": ">=0.1.11,<0.2",
+  "dependencies": [
+    "mediapipe==1.1.0",
+    "opencv-contrib-python==5.0.0.93",
+    "fastapi==0.143.1",
+    "uvicorn==0.54.0",
+    "numpy==2.4.6"
+  ],
+  "supported_host_platforms": [
+    "windows"
+  ],
+  "description": "Robot-camera face following and gesture interaction SDK app, with separate source references for MimiClaw tool use and HRI research. Experimental firmware and cloud/PC helpers are not bundled turnkey features.",
+  "author": "Tangyuan Lab",
+  "icon": "icon.svg"
+}
